@@ -16,17 +16,17 @@ See [FEATURE_SPEC.md](./FEATURE_SPEC.md) for the full specification.
 
 ## Methodologies
 
-| # | Methodology | Source | Status |
-|---|-------------|--------|--------|
-| 1 | Spec Kit    | [github/spec-kit](https://github.com/github/spec-kit) | Not started |
-| 2 | OpenSpec    | [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) | Not started |
-| 3 | Kiro        | [kiro.dev](https://kiro.dev/) | Not started |
-| 4 | BMAD        | [docs.bmad-method.org](https://docs.bmad-method.org) | Not started |
+| #   | Methodology | Source                                                        | Status      |
+| --- | ----------- | ------------------------------------------------------------- | ----------- |
+| 1   | Spec Kit    | [github/spec-kit](https://github.com/github/spec-kit)         | Not started |
+| 2   | OpenSpec    | [Fission-AI/OpenSpec](https://github.com/Fission-AI/OpenSpec) | Not started |
+| 3   | Kiro        | [kiro.dev](https://kiro.dev/)                                 | Not started |
+| 4   | BMAD        | [docs.bmad-method.org](https://docs.bmad-method.org)          | Not started |
 
 ## Project Structure
 
 ```
-sdd-study/
+git-standup-generator/
 ├── FEATURE_SPEC.md              # shared feature specification
 ├── docs/
 │   ├── sdd-principles.md        # core SDD concepts

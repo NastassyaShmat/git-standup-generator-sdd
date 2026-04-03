@@ -33,17 +33,17 @@ requires manual effort. This tool automates that translation.
 
 ## Inputs
 
-| Input | Type | Default | Description |
-|-------|------|---------|-------------|
-| `--repo` | string | `.` (cwd) | Path to the git repository |
-| `--since` | string | `"yesterday"` | Start of the time range (git log format) |
-| `--until` | string | `"now"` | End of the time range |
-| `--author` | string | git config user | Filter by commit author |
-| `--format` | enum | `text` | Output format: `text`, `markdown`, `json` |
-| `--exclude` | string[] | `["merge", "wip"]` | Patterns to exclude from results |
-| `--group-by` | enum | `type` | Grouping strategy: `type`, `branch`, `path` |
-| `--output` | string | stdout | File path to write report to |
-| `--save` | boolean | `false` | Save to local history |
+| Input        | Type     | Default            | Description                                 |
+| ------------ | -------- | ------------------ | ------------------------------------------- |
+| `--repo`     | string   | `.` (cwd)          | Path to the git repository                  |
+| `--since`    | string   | `"yesterday"`      | Start of the time range (git log format)    |
+| `--until`    | string   | `"now"`            | End of the time range                       |
+| `--author`   | string   | git config user    | Filter by commit author                     |
+| `--format`   | enum     | `text`             | Output format: `text`, `markdown`, `json`   |
+| `--exclude`  | string[] | `["merge", "wip"]` | Patterns to exclude from results            |
+| `--group-by` | enum     | `type`             | Grouping strategy: `type`, `branch`, `path` |
+| `--output`   | string   | stdout             | File path to write report to                |
+| `--save`     | boolean  | `false`            | Save to local history                       |
 
 ## Outputs
 
@@ -66,6 +66,7 @@ What I did:
 ## Standup Report — 2026-04-03
 
 ### What I did
+
 - **feat:** Add user authentication endpoint
 - **fix:** Resolve database connection timeout
 - **docs:** Update API documentation for v2
@@ -99,14 +100,14 @@ What I did:
 
 ## Core Modules
 
-| Module | Responsibility |
-|--------|---------------|
-| `git-reader` | Execute git log and parse raw output into structured data |
-| `commit-filter` | Apply exclusion rules (merge, WIP, patterns) |
-| `commit-grouper` | Group commits by type, branch, or path |
-| `report-formatter` | Format grouped commits into text/markdown/JSON |
-| `history-store` | Persist generated reports locally |
-| `cli` | Parse CLI arguments, orchestrate the pipeline |
+| Module             | Responsibility                                            |
+| ------------------ | --------------------------------------------------------- |
+| `git-reader`       | Execute git log and parse raw output into structured data |
+| `commit-filter`    | Apply exclusion rules (merge, WIP, patterns)              |
+| `commit-grouper`   | Group commits by type, branch, or path                    |
+| `report-formatter` | Format grouped commits into text/markdown/JSON            |
+| `history-store`    | Persist generated reports locally                         |
+| `cli`              | Parse CLI arguments, orchestrate the pipeline             |
 
 ## Data Flow
 
