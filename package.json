@@ -1,0 +1,28 @@
+{
+  "name": "sdd-study",
+  "version": "0.1.0",
+  "description": "Spec-Driven Development methodology comparison — building git-standup-generator four ways",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "sdd",
+    "spec-driven-development",
+    "spec-kit",
+    "openspec",
+    "kiro",
+    "bmad"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  }
+}
