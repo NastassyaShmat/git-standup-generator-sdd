@@ -104,10 +104,28 @@ What I did:
 | ------------------ | --------------------------------------------------------- |
 | `git-reader`       | Execute git log and parse raw output into structured data |
 | `commit-filter`    | Apply exclusion rules (merge, WIP, patterns)              |
-| `commit-grouper`   | Group commits by type, branch, or path                    |
+| `commit-grouper`   | Group commits by type, branch, or path; non-conventional commits fall back to `"other"` when grouping by type |
 | `report-formatter` | Format grouped commits into text/markdown/JSON            |
 | `history-store`    | Persist generated reports locally                         |
 | `cli`              | Parse CLI arguments, orchestrate the pipeline             |
+
+## Grouping Behavior
+
+### `--group-by type`
+
+`commit-grouper` extracts the type prefix from conventional commit messages using the pattern
+`/^(\w+)(\(.+\))?!?:/`. Recognised prefixes (`feat`, `fix`, `docs`, `test`, `refactor`, `chore`,
+`style`, `perf`, `ci`, `build`, `revert`) are used as-is. Any commit whose message does not match
+the pattern — or whose prefix is not in the recognised list — is assigned the type `"other"`.
+
+Commits of type `"other"` are included in the report and appear as a separate group. Their full
+message is preserved unchanged in `StandupEntry.message`.
+
+### `--group-by branch` / `--group-by path`
+
+These strategies are independent of commit message format. Every commit is placed into a group
+keyed by its branch name or the first path segment of the changed files respectively. No fallback
+label is needed.
 
 ## Data Flow
 
@@ -170,7 +188,7 @@ interface CliOptions {
 1. Running `git-standup` in a repo with commits produces a readable report
 2. All three output formats generate valid, well-structured output
 3. Filtering correctly excludes merge commits and configured patterns
-4. Grouping produces logical categories from conventional commit messages
+4. Grouping produces logical categories: conventional commits are grouped by their type prefix; non-conventional commits are collected under `"other"` and always appear in the report
 5. `--save` persists the report and can be retrieved later
 
 ## Non-Functional Requirements
