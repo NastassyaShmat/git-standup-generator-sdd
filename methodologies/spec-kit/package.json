@@ -1,0 +1,33 @@
+{
+  "name": "git-standup",
+  "version": "0.1.0",
+  "description": "Zero-dependency CLI tool to generate git standup reports",
+  "type": "module",
+  "bin": {
+    "git-standup": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx/esm --test tests/unit/*.test.ts tests/integration/*.test.ts",
+    "lint": "eslint src tests --ext .ts"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "git",
+    "standup",
+    "cli",
+    "devtools"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  }
+}
