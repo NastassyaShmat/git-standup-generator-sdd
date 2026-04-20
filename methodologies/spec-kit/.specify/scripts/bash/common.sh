@@ -27,9 +27,21 @@ find_specify_root() {
 # Get repository root, prioritizing .specify directory over git
 # This prevents using a parent git repo when spec-kit is initialized in a subdirectory
 get_repo_root() {
-    # First, look for .specify directory (spec-kit's own marker)
+    # First, look for .specify directory searching upward from current working directory
     local specify_root
     if specify_root=$(find_specify_root); then
+        echo "$specify_root"
+        return
+    fi
+
+    # Second, search upward from this script's own location.
+    # Handles the case where spec-kit is initialized in a subdirectory of a larger repo
+    # and Cursor (or another tool) runs commands from the workspace root instead of
+    # the spec-kit subdirectory. common.sh lives at <spec-kit-root>/.specify/scripts/bash/,
+    # so walking upward from here will find the correct .specify directory.
+    local script_dir
+    script_dir="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    if specify_root=$(find_specify_root "$script_dir"); then
         echo "$specify_root"
         return
     fi
@@ -41,7 +53,6 @@ get_repo_root() {
     fi
 
     # Final fallback to script location for non-git repos
-    local script_dir="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     (cd "$script_dir/../../.." && pwd)
 }
 
@@ -61,7 +72,7 @@ get_current_branch() {
     fi
 
     # For non-git repos, try to find the latest feature directory
-    local specs_dir="$repo_root/specs"
+    local specs_dir="$repo_root/spec"
 
     if [[ -d "$specs_dir" ]]; then
         local latest_feature=""
@@ -139,14 +150,14 @@ check_feature_branch() {
     return 0
 }
 
-get_feature_dir() { echo "$1/specs/$2"; }
+get_feature_dir() { echo "$1/spec/$2"; }
 
 # Find feature directory by numeric prefix instead of exact branch match
 # This allows multiple branches to work on the same spec (e.g., 004-fix-bug, 004-add-feature)
 find_feature_dir_by_prefix() {
     local repo_root="$1"
     local branch_name="$2"
-    local specs_dir="$repo_root/specs"
+    local specs_dir="$repo_root/spec"
 
     # Extract prefix from branch (e.g., "004" from "004-whatever" or "20260319-143022" from timestamp branches)
     local prefix=""
