@@ -17,6 +17,14 @@
     "@typescript-eslint/strict-boolean-expressions": "error",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
   },
+  "overrides": [
+    {
+      "files": ["tests/**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-floating-promises": "off"
+      }
+    }
+  ],
   "env": {
     "node": true,
     "es2022": true

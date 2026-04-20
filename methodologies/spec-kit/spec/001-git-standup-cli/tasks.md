@@ -50,7 +50,7 @@
 
 > All five test tasks below MUST be written and confirmed failing (`npm test` shows the test file but all cases red) before any implementation task in this phase begins.
 
-- [ ] T007 [P] [US1] Write `tests/unit/commit-parser.test.ts` — unit tests for `parseCommits(raw: string): GitCommit[]`:
+- [x] T007 [P] [US1] Write `tests/unit/commit-parser.test.ts` — unit tests for `parseCommits(raw: string): GitCommit[]`:
   - Empty string → `[]`
   - Single well-formed record → one `GitCommit` with all fields populated correctly
   - Record with branch backfill: second commit has no ref decoration → inherits branch from prior commit
@@ -60,7 +60,7 @@
   - Record with hash that is not 40 hex chars → commit is skipped
   - Multi-commit raw string → correct `GitCommit[]` length and field values
 
-- [ ] T008 [P] [US1] Write `tests/unit/commit-filter.test.ts` — unit tests for `filterCommits(commits: GitCommit[], patterns: string[]): GitCommit[]`:
+- [x] T008 [P] [US1] Write `tests/unit/commit-filter.test.ts` — unit tests for `filterCommits(commits: GitCommit[], patterns: string[]): GitCommit[]`:
   - `patterns: []` → all commits pass through unchanged
   - `patterns: ["merge"]` + a commit with `isMerge: true` → commit excluded
   - `patterns: ["merge"]` + a commit with `isMerge: false` → commit included
@@ -69,7 +69,7 @@
   - `patterns: ["merge", "wip", "fixup!"]` → all three patterns applied; only clean commits remain
   - Default patterns `["merge", "wip"]` applied to a five-commit fixture → correct subset returned
 
-- [ ] T009 [P] [US1] Write `tests/unit/commit-grouper.test.ts` — unit tests for `groupCommits(commits: GitCommit[], groupBy: 'type' | 'branch' | 'path'): Map<string, StandupEntry[]>`:
+- [x] T009 [P] [US1] Write `tests/unit/commit-grouper.test.ts` — unit tests for `groupCommits(commits: GitCommit[], groupBy: 'type' | 'branch' | 'path'): Map<string, StandupEntry[]>`:
   - `groupBy: "type"` + conventional commit `"feat: add login"` → key `"feat"`, message `"add login"`, hash is 7-char short hash
   - `groupBy: "type"` + non-conventional subject `"random message"` → key `"other"`, message verbatim
   - `groupBy: "type"` with mixed types → correct keys and entry counts
@@ -79,7 +79,7 @@
   - `groupBy: "path"` + commit with `files: []` → key `"root"`
   - Result map has groups sorted by entry count descending; entries within each group sorted by timestamp descending
 
-- [ ] T010 [P] [US1] Write `tests/unit/report-formatter.test.ts` — unit tests for `formatReport(grouped: Map<string, StandupEntry[]>, meta: ReportMeta): { report: StandupReport; formatted: string }`:
+- [x] T010 [P] [US1] Write `tests/unit/report-formatter.test.ts` — unit tests for `formatReport(grouped: Map<string, StandupEntry[]>, meta: ReportMeta): { report: StandupReport; formatted: string }`:
   - **StandupReport shape**: `date`, `author`, `period`, `entries` (correct group keys + entries), `summary.commitCount`, `summary.branchesTouched`, `summary.typeDistribution`
   - `summary.typeDistribution` only includes types present in entries
   - `format: "text"` → output starts with `"What I did:\n"`, contains `"• <hash> <message>"` lines, ends with `"---\n<N> commit(s) across …"`
@@ -88,7 +88,7 @@
   - `format: "markdown"` with zero entries → `"_No commits found for <author> in <period>._"`
   - `format: "json"` → `JSON.parse(output)` equals the `StandupReport` object; `JSON.stringify(report, null, 2)` round-trips losslessly
 
-- [ ] T011 [US1] Write `tests/integration/pipeline.test.ts` — integration test covering the complete data pipeline:
+- [x] T011 [US1] Write `tests/integration/pipeline.test.ts` — integration test covering the complete data pipeline:
   - **Setup**: Use `node:fs` + `node:child_process` to `git init` a temporary directory, set `user.email` and `user.name` locally, create files, and make 5 commits — 3 conventional feat/fix commits, 1 merge commit (via `git merge --no-ff`), 1 WIP commit
   - **Assertion — default run**: Invoke the full pipeline (`parseCommits → filterCommits → groupCommits → formatReport`) with default options (exclude `["merge","wip"]`, `groupBy: "type"`, `format: "text"`) against the fixture; assert exactly 3 entries in the result, merge and WIP commits absent, footer shows `3 commit(s)`, `feat` and `fix` groups present
   - **Assertion — JSON format**: Re-run with `format: "json"`; `JSON.parse` the output; assert `summary.commitCount === 3`, `entries` keys match expected types, `summary.branchesTouched` is non-empty
@@ -96,13 +96,13 @@
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement `src/commit-parser.ts` — export `parseCommits(raw: string): GitCommit[]`; use `\x00` record separator and `\n` field separator matching the `git log --format` template from `research.md`; implement branch backfill; emit stderr warning and skip on validation failure; all unit tests in T007 must pass
-- [ ] T013 [US1] Implement `src/commit-filter.ts` — export `filterCommits(commits: GitCommit[], patterns: string[]): GitCommit[]`; special-case `"merge"` token; all other patterns are case-insensitive `startsWith` matches; all unit tests in T008 must pass
-- [ ] T014 [US1] Implement `src/commit-grouper.ts` — export `groupCommits(commits: GitCommit[], groupBy: 'type' | 'branch' | 'path'): Map<string, StandupEntry[]>`; include conventional-commit regex for type/description extraction; sort groups by entry count descending, entries by timestamp descending; all unit tests in T009 must pass
-- [ ] T015 [US1] Implement `src/report-formatter.ts` — export `formatReport(grouped: Map<string, StandupEntry[]>, meta: ReportMeta): { report: StandupReport; formatted: string }`; implement all three format renderers (text, markdown, JSON); all unit tests in T010 must pass
-- [ ] T016 [US1] Implement `src/git-reader.ts` — export `readGitLog(options: Pick<CliOptions, 'since' | 'until' | 'author' | 'repo'>): Promise<string>`; use `child_process.spawn` with `shell: false`; construct `git log` arguments with `--format`, `--name-only`, `--since`, `--until`, `--author`, `-z` separator; reject on non-zero exit or git not found
-- [ ] T017 [US1] Implement `src/cli.ts` — parse `process.argv` via `util.parseArgs`; resolve default `author` from `git config user.email`; orchestrate `readGitLog → parseCommits → filterCommits → groupCommits → formatReport`; print result to stdout; exit 0 on success, exit 1 with message on user error
-- [ ] T018 [US1] Run `npm test` and `npm run typecheck` — all unit tests (T007–T010) and the integration test (T011) must be green; zero TypeScript errors
+- [x] T012 [US1] Implement `src/commit-parser.ts` — export `parseCommits(raw: string): GitCommit[]`; use `\x00` record separator and `\n` field separator matching the `git log --format` template from `research.md`; implement branch backfill; emit stderr warning and skip on validation failure; all unit tests in T007 must pass
+- [x] T013 [US1] Implement `src/commit-filter.ts` — export `filterCommits(commits: GitCommit[], patterns: string[]): GitCommit[]`; special-case `"merge"` token; all other patterns are case-insensitive `startsWith` matches; all unit tests in T008 must pass
+- [x] T014 [US1] Implement `src/commit-grouper.ts` — export `groupCommits(commits: GitCommit[], groupBy: 'type' | 'branch' | 'path'): Map<string, StandupEntry[]>`; include conventional-commit regex for type/description extraction; sort groups by entry count descending, entries by timestamp descending; all unit tests in T009 must pass
+- [x] T015 [US1] Implement `src/report-formatter.ts` — export `formatReport(grouped: Map<string, StandupEntry[]>, meta: ReportMeta): { report: StandupReport; formatted: string }`; implement all three format renderers (text, markdown, JSON); all unit tests in T010 must pass
+- [x] T016 [US1] Implement `src/git-reader.ts` — export `readGitLog(options: Pick<CliOptions, 'since' | 'until' | 'author' | 'repo'>): Promise<string>`; use `child_process.spawn` with `shell: false`; construct `git log` arguments with `--format`, `--name-only`, `--since`, `--until`, `--author`, `-z` separator; reject on non-zero exit or git not found
+- [x] T017 [US1] Implement `src/cli.ts` — parse `process.argv` via `util.parseArgs`; resolve default `author` from `git config user.email`; orchestrate `readGitLog → parseCommits → filterCommits → groupCommits → formatReport`; print result to stdout; exit 0 on success, exit 1 with message on user error
+- [x] T018 [US1] Run `npm test` and `npm run typecheck` — all unit tests (T007–T010) and the integration test (T011) must be green; zero TypeScript errors
 
 **Checkpoint**: `git-standup` (after `npm run build && npm link`) prints a standup report when run in a repository with recent commits. `npm test` is fully green.
 
@@ -116,7 +116,7 @@
 
 ### Tests for User Story 2 — Write First, Confirm Failing ⚠️
 
-- [ ] T019 [P] [US2] Extend `tests/unit/commit-parser.test.ts` (or add `tests/unit/cli-options.test.ts`) — unit tests for flag parsing edge cases:
+- [x] T019 [P] [US2] Extend `tests/unit/commit-parser.test.ts` (or add `tests/unit/cli-options.test.ts`) — unit tests for flag parsing edge cases:
   - `--since` value passed through verbatim to `CliOptions.since`
   - `--until` value passed through verbatim to `CliOptions.until`
   - `--author` value passed through verbatim to `CliOptions.author`
@@ -124,7 +124,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Update `src/cli.ts` — wire `--since`, `--until`, `--author` into `parseArgs` config; pass resolved values to `readGitLog`; all T019 tests pass
+- [x] T020 [US2] Update `src/cli.ts` — wire `--since`, `--until`, `--author` into `parseArgs` config; pass resolved values to `readGitLog`; all T019 tests pass
 
 **Checkpoint**: `git-standup --since="3 days ago"` returns only commits from that window; `--author="colleague@example.com"` filters by author.
 
@@ -138,7 +138,7 @@
 
 ### Tests for User Story 3 — Write First, Confirm Failing ⚠️
 
-- [ ] T021 [P] [US3] Add format-validation tests to `tests/unit/report-formatter.test.ts` (or a new `tests/unit/format-validation.test.ts`):
+- [x] T021 [P] [US3] Add format-validation tests to `tests/unit/report-formatter.test.ts` (or a new `tests/unit/format-validation.test.ts`):
   - `--format=text` → text output matches schema from `contracts/cli.md`
   - `--format=markdown` → markdown output matches schema
   - `--format=json` → output is valid JSON conforming to `StandupReport`
@@ -146,7 +146,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Update `src/cli.ts` — add `--format` to `parseArgs` config; validate against allowed values; pass to `formatReport`; all T021 tests pass
+- [x] T022 [US3] Update `src/cli.ts` — add `--format` to `parseArgs` config; validate against allowed values; pass to `formatReport`; all T021 tests pass
 
 **Checkpoint**: All three formats produce correctly structured output per the contracts.
 
@@ -160,14 +160,14 @@
 
 ### Tests for User Story 4 — Write First, Confirm Failing ⚠️
 
-- [ ] T023 [P] [US4] Add grouping-strategy tests to `tests/unit/commit-grouper.test.ts` (branch and path strategies are already covered in T009; add invalid value validation):
+- [x] T023 [P] [US4] Add grouping-strategy tests to `tests/unit/commit-grouper.test.ts` (branch and path strategies are already covered in T009; add invalid value validation):
   - `--group-by=branch` → commits keyed by branch name
   - `--group-by=path` → commits keyed by top-level directory prefix
   - Invalid `--group-by=author` → `cli.ts` exits 1
 
 ### Implementation for User Story 4
 
-- [ ] T024 [US4] Update `src/cli.ts` — add `--group-by` to `parseArgs` config; validate against `type|branch|path`; pass to `groupCommits`; all T023 tests pass
+- [x] T024 [US4] Update `src/cli.ts` — add `--group-by` to `parseArgs` config; validate against `type|branch|path`; pass to `groupCommits`; all T023 tests pass
 
 **Checkpoint**: Each grouping strategy produces distinct, correctly organized output.
 
@@ -181,14 +181,14 @@
 
 ### Tests for User Story 5 — Write First, Confirm Failing ⚠️
 
-- [ ] T025 [P] [US5] Add exclusion-override tests to `tests/unit/commit-filter.test.ts` (some already covered in T008; add):
+- [x] T025 [P] [US5] Add exclusion-override tests to `tests/unit/commit-filter.test.ts` (some already covered in T008; add):
   - `--exclude="fixup!"` → only `fixup!`-prefix commits excluded; merge commits pass through
   - `--exclude=""` (empty string) → all commits pass through (no filtering)
   - `--exclude="merge,wip,fixup!"` → all three patterns active; three different commits each excluded
 
 ### Implementation for User Story 5
 
-- [ ] T026 [US5] Update `src/cli.ts` — parse `--exclude` as comma-split string array; replace default `["merge","wip"]` entirely when flag is provided; all T025 tests pass
+- [x] T026 [US5] Update `src/cli.ts` — parse `--exclude` as comma-split string array; replace default `["merge","wip"]` entirely when flag is provided; all T025 tests pass
 
 **Checkpoint**: `--exclude` correctly replaces defaults; custom patterns work case-insensitively.
 
@@ -202,7 +202,7 @@
 
 ### Tests for User Story 6 — Write First, Confirm Failing ⚠️
 
-- [ ] T027 [P] [US6] Write `tests/unit/history-store.test.ts` — unit tests for `appendToHistory(report: StandupReport, historyPath: string): Promise<void>`:
+- [x] T027 [P] [US6] Write `tests/unit/history-store.test.ts` — unit tests for `appendToHistory(report: StandupReport, historyPath: string): Promise<void>`:
   - History file does not exist → directory + file created; file contains `[<report>]`
   - History file exists with valid array → new report appended; prior entries preserved; `savedAt` field present
   - History file exists with invalid JSON → file renamed to `history.json.bak.<timestamp>`; new `[]` written; save proceeds
@@ -210,8 +210,8 @@
 
 ### Implementation for User Story 6
 
-- [ ] T028 [US6] Implement `src/history-store.ts` — export `appendToHistory(report: StandupReport, historyPath: string): Promise<void>`; implement create/append/corrupt-recovery logic per `data-model.md`; all T027 tests pass
-- [ ] T029 [US6] Update `src/cli.ts` — add `--output` and `--save` to `parseArgs` config; write report to file when `--output` provided; call `appendToHistory` when `--save` set; exit 1 with clear message on file write failure
+- [x] T028 [US6] Implement `src/history-store.ts` — export `appendToHistory(report: StandupReport, historyPath: string): Promise<void>`; implement create/append/corrupt-recovery logic per `data-model.md`; all T027 tests pass
+- [x] T029 [US6] Update `src/cli.ts` — add `--output` and `--save` to `parseArgs` config; write report to file when `--output` provided; call `appendToHistory` when `--save` set; exit 1 with clear message on file write failure
 
 **Checkpoint**: `--output=standup.md` writes the file; `--save` appends a new entry to history; corrupt history is recovered gracefully.
 
@@ -225,14 +225,14 @@
 
 ### Tests for User Story 7 — Write First, Confirm Failing ⚠️
 
-- [ ] T030 [P] [US7] Add repo-validation tests to `tests/integration/pipeline.test.ts` (or a new `tests/integration/repo-path.test.ts`):
+- [x] T030 [P] [US7] Add repo-validation tests to `tests/integration/pipeline.test.ts` (or a new `tests/integration/repo-path.test.ts`):
   - Valid external repo path → report generated correctly (use the fixture repo from T011 at a non-cwd path)
   - Non-existent path → process exits 1 with `"--repo path does not exist"` message
   - Path exists but is not a git repo (no `.git/`) → process exits 1 with clear message
 
 ### Implementation for User Story 7
 
-- [ ] T031 [US7] Update `src/cli.ts` — add `--repo` to `parseArgs` config; validate `.git` presence using `node:fs.existsSync`; pass validated path as cwd to `readGitLog`; all T030 tests pass
+- [x] T031 [US7] Update `src/cli.ts` — add `--repo` to `parseArgs` config; validate `.git` presence using `node:fs.existsSync`; pass validated path as cwd to `readGitLog`; all T030 tests pass
 
 **Checkpoint**: `--repo` works correctly for valid repos; invalid paths produce user-friendly error messages and exit 1.
 
@@ -242,12 +242,12 @@
 
 **Purpose**: Final wiring, meta flags, and validation across all user stories.
 
-- [ ] T032 [P] Add `--help` / `-h` flag to `src/cli.ts` — print usage text (synopsis, all flags with defaults, examples) and exit 0 (FR-016)
-- [ ] T033 [P] Add `--version` / `-v` flag to `src/cli.ts` — read `version` from `package.json` at runtime and print it, then exit 0 (FR-017)
-- [ ] T034 [P] Verify `package.json` `bin` field points to `dist/cli.js`; confirm `npm run build && npm link` makes `git-standup` available globally; run `git-standup --version` and `git standup --version`
-- [ ] T035 Run `npm test` (full suite: unit + integration) — all tests green
-- [ ] T036 Run `npm run lint` — zero ESLint errors; `no-explicit-any` rule enforced
-- [ ] T037 Run `npm run typecheck` — zero TypeScript errors in strict mode
+- [x] T032 [P] Add `--help` / `-h` flag to `src/cli.ts` — print usage text (synopsis, all flags with defaults, examples) and exit 0 (FR-016)
+- [x] T033 [P] Add `--version` / `-v` flag to `src/cli.ts` — read `version` from `package.json` at runtime and print it, then exit 0 (FR-017)
+- [x] T034 [P] Verify `package.json` `bin` field points to `dist/cli.js`; confirm `npm run build && npm link` makes `git-standup` available globally; run `git-standup --version` and `git standup --version`
+- [x] T035 Run `npm test` (full suite: unit + integration) — all tests green (66/66)
+- [x] T036 Run `npm run lint` — zero ESLint errors; `no-explicit-any` rule enforced
+- [x] T037 Run `npm run typecheck` — zero TypeScript errors in strict mode
 - [ ] T038 Run the quickstart.md validation: execute each sample invocation in `quickstart.md` against a real repository and confirm expected output shape
 
 ---
