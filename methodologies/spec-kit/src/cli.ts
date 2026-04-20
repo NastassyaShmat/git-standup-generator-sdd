@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { parseArgs } from "node:util";
 import { execSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -251,7 +251,7 @@ export async function run(argv: string[]): Promise<void> {
 // Entry point (only executed when run directly, not when imported by tests)
 // ---------------------------------------------------------------------------
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) {
   run(process.argv.slice(2)).catch((err: unknown) => {
     const msg = err instanceof Error ? err.message : String(err);
     process.stderr.write(`Unexpected error: ${msg}\n`);
