@@ -248,7 +248,7 @@
 - [x] T035 Run `npm test` (full suite: unit + integration) — all tests green (66/66)
 - [x] T036 Run `npm run lint` — zero ESLint errors; `no-explicit-any` rule enforced
 - [x] T037 Run `npm run typecheck` — zero TypeScript errors in strict mode
-- [ ] T038 Run the quickstart.md validation: execute each sample invocation in `quickstart.md` against a real repository and confirm expected output shape
+- [x] T038 Run the quickstart.md validation: execute each sample invocation in `quickstart.md` against a real repository and confirm expected output shape
 
 ---
 
