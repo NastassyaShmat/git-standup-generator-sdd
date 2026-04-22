@@ -1,0 +1,41 @@
+schema: spec-driven
+
+context: |
+  Project: git-standup-generator — a Node.js CLI tool that generates daily standup
+  reports from git commit history.
+
+  Tech stack:
+  - Language: TypeScript (strict mode)
+  - Runtime: Node.js >= 18 (LTS)
+  - Dependencies: zero runtime deps, only Node.js built-ins (node:child_process,
+    node:fs, node:path, node:os, node:util) and git CLI
+  - Module system: ESM (type: "module")
+
+  Source code output directory: src/
+  CLI binary name: git-standup
+
+  Core modules and their responsibilities:
+  - git-reader: execute git log, parse raw output into GitCommit[]
+  - commit-filter: apply exclusion rules (merge, WIP, custom patterns)
+  - commit-grouper: group commits by type/branch/path; non-conventional → "other"
+  - report-formatter: render grouped commits as text, markdown, or JSON
+  - history-store: persist generated reports to ~/.git-standup/history.json
+  - cli: parse CLI args via node:util.parseArgs, orchestrate the pipeline
+
+  CLI flags: --repo, --since (default: "yesterday"), --until (default: "now"),
+  --author (default: git config user.email), --format (text|markdown|json),
+  --exclude (comma-separated patterns), --group-by (type|branch|path),
+  --output (file path), --save (boolean)
+
+  Key TypeScript interfaces:
+  - GitCommit: { hash, message, author, email, date, branch, isMerge }
+  - StandupEntry: { type, message, hash, branch, timestamp }
+  - StandupReport: { date, author, period, entries, summary }
+
+  Non-functional requirements:
+  - Execution < 2s for repos up to 10,000 commits
+  - Works on macOS, Linux, Windows (WSL)
+
+  Conventional commit grouping regex: /^(\w+)(\(.+\))?!?:/
+  Recognised types: feat, fix, docs, test, refactor, chore, style, perf, ci, build, revert
+  Any unrecognised prefix → assigned type "other"
