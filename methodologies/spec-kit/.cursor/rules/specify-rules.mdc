@@ -1,0 +1,35 @@
+---
+description: Project Development Guidelines
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# spec-kit Development Guidelines
+
+Auto-generated from all feature plans. Last updated: 2026-04-20
+
+## Active Technologies
+
+- TypeScript (strict mode) / Node.js ≥ 18 (LTS) + None — `node:child_process`, `node:fs`, `node:path`, `node:os`, `node:util` (built-ins) + git CLI (001-git-standup-cli)
+
+## Project Structure
+
+```text
+src/
+tests/
+```
+
+## Commands
+
+npm test && npm run lint
+
+## Code Style
+
+TypeScript (strict mode) / Node.js ≥ 18 (LTS): Follow standard conventions
+
+## Recent Changes
+
+- 001-git-standup-cli: Added TypeScript (strict mode) / Node.js ≥ 18 (LTS) + None — `node:child_process`, `node:fs`, `node:path`, `node:os`, `node:util` (built-ins) + git CLI
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->
