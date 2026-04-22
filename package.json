@@ -7,14 +7,10 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "bin": {
-    "git-standup": "methodologies/openspec/bin/git-standup"
-  },
   "scripts": {
     "build": "tsc",
     "lint": "eslint . --ext .ts",
-    "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test 'methodologies/openspec/tests/**/*.test.ts'"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "sdd",

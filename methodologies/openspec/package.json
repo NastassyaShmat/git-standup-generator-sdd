@@ -1,0 +1,24 @@
+{
+  "name": "git-standup-openspec",
+  "version": "0.1.0",
+  "description": "Zero-dependency CLI tool to generate git standup reports (openspec implementation)",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "git-standup": "bin/git-standup"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test 'tests/**/*.test.ts'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  }
+}
