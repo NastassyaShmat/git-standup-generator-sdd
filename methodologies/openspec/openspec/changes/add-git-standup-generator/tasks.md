@@ -21,112 +21,112 @@ run in parallel unless marked.
 
 ## 2. `git-reader` module
 
-- [ ] 2.1 Implement `src/git-reader.ts` exporting
+- [x] 2.1 Implement `src/git-reader.ts` exporting
       `readCommits(options: CliOptions): Promise<GitCommit[]>`.
-- [ ] 2.2 Build the `git log` argv: `--pretty=format:%H%x1f%an%x1f%ae%x1f%aI%x1f%P%x1f%s%x1e`,
+- [x] 2.2 Build the `git log` argv: `--pretty=format:%H%x1f%an%x1f%ae%x1f%aI%x1f%P%x1f%s%x1e`,
       plus `--since`, `--until`, and `--author` when set.
-- [ ] 2.3 Spawn with `node:child_process.spawn`, stream stdout, split on
+- [x] 2.3 Spawn with `node:child_process.spawn`, stream stdout, split on
       `\x1e`, and parse each record by splitting on `\x1f`.
-- [ ] 2.4 Derive `isMerge` from the parent-hash field (count of
+- [x] 2.4 Derive `isMerge` from the parent-hash field (count of
       space-separated hashes > 1).
-- [ ] 2.5 Resolve the current branch via `git rev-parse --abbrev-ref HEAD`
+- [x] 2.5 Resolve the current branch via `git rev-parse --abbrev-ref HEAD`
       and attach it to every commit as the default `branch` value.
-- [ ] 2.6 Define and throw a typed `GitReaderError` when `git` is missing
+- [x] 2.6 Define and throw a typed `GitReaderError` when `git` is missing
       (ENOENT) or exits non-zero; include stderr in the message.
-- [ ] 2.7 Unit-test parsing against a fixture string with: normal commits,
+- [x] 2.7 Unit-test parsing against a fixture string with: normal commits,
       multi-line messages, a merge commit, and a commit containing the
       `|` / tab characters (sanity check for separator choice).
 
 ## 3. `commit-filter` module
 
-- [ ] 3.1 Implement `src/commit-filter.ts` exporting
+- [x] 3.1 Implement `src/commit-filter.ts` exporting
       `filterCommits(commits: GitCommit[], exclude: string[]): GitCommit[]`.
-- [ ] 3.2 Always drop commits where `isMerge === true`.
-- [ ] 3.3 Drop commits whose `message` (lower-cased) contains any lower-cased
+- [x] 3.2 Always drop commits where `isMerge === true`.
+- [x] 3.3 Drop commits whose `message` (lower-cased) contains any lower-cased
       entry in `exclude`.
-- [ ] 3.4 Preserve input order.
-- [ ] 3.5 Unit-test: default excludes drop `WIP`/`wip:` / `Merge branch`
+- [x] 3.4 Preserve input order.
+- [x] 3.5 Unit-test: default excludes drop `WIP`/`wip:` / `Merge branch`
       commits; empty exclude list still drops merges; mixed case works.
 
 ## 4. `commit-grouper` module
 
-- [ ] 4.1 Implement `src/commit-grouper.ts` exporting
+- [x] 4.1 Implement `src/commit-grouper.ts` exporting
       `groupCommits(commits: GitCommit[], strategy: GroupBy): Record<string, StandupEntry[]>`.
-- [ ] 4.2 Implement the `type` strategy using the regex
+- [x] 4.2 Implement the `type` strategy using the regex
       `/^(\w+)(\(.+\))?!?:/` on the commit subject, with the recognised list
       from `config.yaml`. Unrecognised or unmatched → group key `"other"`.
-- [ ] 4.3 Implement the `branch` strategy — key is `commit.branch`.
-- [ ] 4.4 Implement the `path` strategy — run `git show --name-only
+- [x] 4.3 Implement the `branch` strategy — key is `commit.branch`.
+- [x] 4.4 Implement the `path` strategy — run `git show --name-only
       --pretty=format: <hash>` per commit, derive the most-common first path
       segment, default to `"root"` when the commit has no file changes.
-- [ ] 4.5 Ensure every emitted `StandupEntry` carries the **original**
+- [x] 4.5 Ensure every emitted `StandupEntry` carries the **original**
       `message` unchanged (do not strip the type prefix).
-- [ ] 4.6 Unit-test: conventional, non-conventional, breaking-change (`!:`)
+- [x] 4.6 Unit-test: conventional, non-conventional, breaking-change (`!:`)
       and scope-in-parens (`feat(api):`) commit subjects.
 
 ## 5. `report-formatter` module
 
-- [ ] 5.1 Implement `src/report-formatter.ts` exporting
+- [x] 5.1 Implement `src/report-formatter.ts` exporting
       `formatReport(report: StandupReport, format: OutputFormat): string`.
-- [ ] 5.2 `text` format matches the layout in `FEATURE_SPEC.md` — header,
+- [x] 5.2 `text` format matches the layout in `FEATURE_SPEC.md` — header,
       `What I did:` block with `• [type] message` bullets, summary line.
-- [ ] 5.3 `markdown` format uses `## Standup Report — …`,
+- [x] 5.3 `markdown` format uses `## Standup Report — …`,
       `### What I did`, `**type:**` bold prefixes, and a `>` summary.
-- [ ] 5.4 `json` format uses `JSON.stringify(report, null, 2)` and nothing
+- [x] 5.4 `json` format uses `JSON.stringify(report, null, 2)` and nothing
       else (no trailing newline beyond what the CLI adds on write).
-- [ ] 5.5 Unit-test: snapshot test for each format against a fixed
+- [x] 5.5 Unit-test: snapshot test for each format against a fixed
       `StandupReport` fixture including an `"other"` group.
 
 ## 6. `history-store` module
 
-- [ ] 6.1 Implement `src/history-store.ts` exporting `appendReport`,
+- [x] 6.1 Implement `src/history-store.ts` exporting `appendReport`,
       `listReports`, and `findByDate`.
-- [ ] 6.2 Resolve the file path to
+- [x] 6.2 Resolve the file path to
       `path.join(os.homedir(), ".git-standup", "history.json")`.
-- [ ] 6.3 Create the directory with `fs.mkdir({ recursive: true })` before
+- [x] 6.3 Create the directory with `fs.mkdir({ recursive: true })` before
       any write.
-- [ ] 6.4 Read-modify-write `appendReport`: read existing array (empty on
+- [x] 6.4 Read-modify-write `appendReport`: read existing array (empty on
       missing or malformed file), push the new report, write to a
       `.history.json.tmp` sibling, then `rename`.
-- [ ] 6.5 Unit-test against a temp `HOME` directory: missing-file path,
+- [x] 6.5 Unit-test against a temp `HOME` directory: missing-file path,
       existing-file path, and interrupted-write recovery (pre-existing
       `.tmp` file is overwritten).
 
 ## 7. `cli` module
 
-- [ ] 7.1 Implement `src/cli.ts` exporting `run(argv: string[]): Promise<number>`.
-- [ ] 7.2 Parse flags with `node:util.parseArgs` (`--repo`, `--since`,
+- [x] 7.1 Implement `src/cli.ts` exporting `run(argv: string[]): Promise<number>`.
+- [x] 7.2 Parse flags with `node:util.parseArgs` (`--repo`, `--since`,
       `--until`, `--author`, `--format`, `--exclude`, `--group-by`,
       `--output`, `--save`).
-- [ ] 7.3 Resolve defaults per the spec, including `author` from
+- [x] 7.3 Resolve defaults per the spec, including `author` from
       `git config user.email` (ignore failure).
-- [ ] 7.4 Validate enums: `format ∈ {text, markdown, json}`,
+- [x] 7.4 Validate enums: `format ∈ {text, markdown, json}`,
       `groupBy ∈ {type, branch, path}`. Invalid values print usage and exit
       with code `2`.
-- [ ] 7.5 Parse `--exclude` as a comma-separated list; empty string → `[]`
+- [x] 7.5 Parse `--exclude` as a comma-separated list; empty string → `[]`
       (explicitly clears the default).
-- [ ] 7.6 Orchestrate the pipeline: `readCommits` → `filterCommits` →
+- [x] 7.6 Orchestrate the pipeline: `readCommits` → `filterCommits` →
       `groupCommits` → build `StandupReport` → `formatReport` → write.
-- [ ] 7.7 If `--output` is set, write to that file; otherwise write to
+- [x] 7.7 If `--output` is set, write to that file; otherwise write to
       stdout. Always end with a single trailing newline.
-- [ ] 7.8 If `--save` is set, call `history-store.appendReport(report)`
+- [x] 7.8 If `--save` is set, call `history-store.appendReport(report)`
       **after** the primary output has been written.
-- [ ] 7.9 Return exit code `0` on success, `1` on git / I/O errors, `2` on
+- [x] 7.9 Return exit code `0` on success, `1` on git / I/O errors, `2` on
       invalid arguments. Errors print a single-line, actionable message to
       stderr.
-- [ ] 7.10 Unit-test `run` by stubbing `git-reader` and `history-store` and
+- [x] 7.10 Unit-test `run` by stubbing `git-reader` and `history-store` and
       asserting on the formatter output and the exit code.
 
 ## 8. Integration / acceptance
 
-- [ ] 8.1 Add an integration test that runs `run` against a throwaway git
+- [x] 8.1 Add an integration test that runs `run` against a throwaway git
       repo (created in a temp dir with real `git init` + a handful of
       commits) and asserts a well-formed `text` report for the default
       flags.
-- [ ] 8.2 Add the same test for `--format markdown`, `--format json`, and
+- [x] 8.2 Add the same test for `--format markdown`, `--format json`, and
       `--group-by branch`.
-- [ ] 8.3 Benchmark `run` against a repo with 10,000 seeded commits;
+- [x] 8.3 Benchmark `run` against a repo with 10,000 seeded commits;
       assert wall time < 2s on the CI runner (skippable via env var).
-- [ ] 8.4 Verify `--save` writes to `~/.git-standup/history.json` within a
+- [x] 8.4 Verify `--save` writes to `~/.git-standup/history.json` within a
       fake `HOME` and that `listReports()` reads it back.
-- [ ] 8.5 Smoke-test the `bin/git-standup` shim end-to-end via `npx`.
+- [x] 8.5 Smoke-test the `bin/git-standup` shim end-to-end via `npx`.
