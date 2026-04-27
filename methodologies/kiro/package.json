@@ -1,0 +1,28 @@
+{
+  "name": "git-standup-generator",
+  "version": "1.0.0",
+  "description": "A zero-dependency Node.js CLI tool that reads git commit history and generates formatted daily standup reports.",
+  "bin": {
+    "git-standup-generator": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "<rootDir>/test/**/*.test.ts"
+    ]
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.15.21",
+    "fast-check": "^3.23.2",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.3.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}
