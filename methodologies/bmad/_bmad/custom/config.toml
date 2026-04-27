@@ -1,7 +1,14 @@
 # Team / enterprise overrides for _bmad/config.toml.
 # Committed to the repo — applies to every developer on the project.
 # Tables deep-merge over base config; keyed entries merge by key.
-# Example: override an agent descriptor, or add a new agent.
 #
-# [agents.bmad-agent-pm]
-# description = "Prefers short, bulleted PRDs over narrative drafts."
+# BMAD artifacts (planning + implementation outputs) live under methodologies/bmad/
+# so the repo root stays reserved for product SoT (e.g. FEATURE_SPEC.md) only.
+# Re-apply after BMAD installer if it resets paths in the base config.toml.
+
+[core]
+output_folder = "{project-root}/methodologies/bmad/_bmad-output"
+
+[modules.bmm]
+planning_artifacts = "{project-root}/methodologies/bmad/_bmad-output/planning-artifacts"
+implementation_artifacts = "{project-root}/methodologies/bmad/_bmad-output/implementation-artifacts"

@@ -171,7 +171,7 @@ artifacts. This makes the constitution a standing directive — not a one-time p
 | **Spec Kit** | `constitution.md` in `.specify/memory/` loaded as persistent context across all phases and features. `CLAUDE.md` (or equivalent) updated automatically to reference active spec artifacts — constitution acts as a standing directive, not a one-time prompt. |
 | **OpenSpec** | `openspec/specs/` is the living system-of-record for the entire codebase, updated on every archived change. "Context hygiene" is an explicit usage guideline: clear context before implementation so spec artifacts — not conversation — provide ground truth. |
 | **Kiro** | Steering files (`.kiro/steering/*.md`) injected into every agent interaction as persistent context, separate from per-feature spec artifacts. |
-| **BMAD** | `project-context.md` + `_bmad-output/` artifacts accumulate across sessions. Each workflow runs in a fresh chat, but prior workflow outputs provide continuity. |
+| **BMAD** | `project-context.md` + BMAD planning outputs under `methodologies/bmad/_bmad-output/` accumulate across sessions. Each workflow runs in a fresh chat, but prior workflow outputs provide continuity. |
 
 ---
 

@@ -16,8 +16,8 @@ stepsCompleted:
   - step-12-complete.md
 inputDocuments:
   - "FEATURE_SPEC.md"
-  - "_bmad-output/planning-artifacts/product-brief-git-standup-generator.md"
-  - "_bmad-output/planning-artifacts/product-brief-git-standup-generator-distillate.md"
+  - "methodologies/bmad/_bmad-output/planning-artifacts/product-brief-git-standup-generator.md"
+  - "methodologies/bmad/_bmad-output/planning-artifacts/product-brief-git-standup-generator-distillate.md"
 workflowType: prd
 documentCounts:
   briefs: 2
