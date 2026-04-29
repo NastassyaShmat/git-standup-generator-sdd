@@ -1,350 +1,227 @@
-# Workflow Comparison: Spec Kit vs OpenSpec vs Kiro
+# Methodology Comparison: Spec Kit vs OpenSpec vs Kiro
 
-Practical observations from implementing the same feature — `git-standup-generator` —
-using all three approaches. Differences that compare Spec Kit and OpenSpec are
-grounded in concrete steps from those sessions, not in documentation claims alone.
-The three subsections that follow—**Spec Kit**, **OpenSpec**, and **Kiro**—each
-cover how that track felt to drive, what spec artifacts look like, and a short
-**implementation review** of the code under `methodologies/spec-kit/`,
-`methodologies/openspec/`, and `methodologies/kiro/`. All three implementations
-are **TypeScript** on Node with `tsc` → `dist/`, so the **stack is comparable**;
-the differentiators are process and tooling, not the language.
+A single narrative: **each methodology’s idea and workflow**, then **repository-grounded verification** under `methodologies/spec-kit`, `methodologies/openspec`, and `methodologies/kiro`, and finally **evaluation of outcomes** for the same feature—a CLI producing a stand-up report from git history.
+
+Where subjective experience or Kiro artefacts cannot be verified from markdown under `methodologies/kiro`, this document states that plainly.
+
+**Limit:** `methodologies/kiro` does **not** contain committed markdown artefacts for Kiro (`requirements.md`, `design.md`, `steering/*.md`, `.config.kiro`). The Kiro column below relies on consolidated session notes alongside **code review** of that folder; **detailed Kiro textual specs are not reproduced there**.
 
 ---
 
-## Setup
+## 1. Scope
 
-| | Spec Kit | OpenSpec | Kiro |
-|---|---|---|---|
-| **Artifacts produced** | `spec.md`, `plan.md`, `tasks.md` (+ optional `research.md`, `data-model.md`, `checklists/`) | `proposal.md`, `design.md`, `specs/**/*.md`, `tasks.md` | Steering: `product.md`, `tech.md`, `structure.md`; per-feature: `requirements.md`, `design.md`, `tasks.md` (+ `.config.kiro`) |
-| **Total spec lines (core)** | 587 (spec + plan + tasks) | 363 (proposal + design + tasks) + 3 separate spec files | ~665 (requirements + design + tasks); + ~121 across steering |
-| **Source files** | 8 `.ts` files | 7 `.ts` files | 8 `.ts` files |
-| **Test files** | 9 `.ts` files | 7 `.ts` files | 9 `test/*.ts` (including `setup.test.ts`, broad integration suite) |
-| **Standalone package** | Ready out of the box (own `package.json` + `dist/`) | Required a second change (`add-standalone-package`) to add `package.json` and `tsconfig.json` | `package.json` + `tsconfig.json` + `bin` → `dist/index.js` after `tsc` (no runtime `dependencies`, same idea as a lean CLI) |
+All three implementations use **TypeScript**, Node, and `tsc` → `dist/`: **the stack is comparable**; differences are **process, tooling, and artefact models**, not the language.
 
----
+### 1.1 Snapshot: artefacts, code, and packaging
 
-## Difference 1: Artifact Granularity and Ownership
-
-**Spec Kit** produces 3 core artifacts for the entire feature, each covering a
-different concern but living in the same flat folder:
-
-```
-spec/001-git-standup-cli/
-├── spec.md        # what + why (user stories, acceptance criteria)
-├── plan.md        # how (tech stack, architecture, module breakdown)
-└── tasks.md       # ordered task list with file paths
-```
-
-**OpenSpec** separates concerns across 4 artifact types AND splits behavioral
-requirements into per-capability spec files:
-
-```
-changes/add-git-standup-generator/
-├── proposal.md         # why (problem + scope)
-├── design.md           # how (architecture decisions with alternatives)
-├── specs/
-│   ├── cli/spec.md         # what — CLI behavior only
-│   ├── history/spec.md     # what — persistence only
-│   └── standup-report/spec.md  # what — report pipeline only
-└── tasks.md            # implementation checklist
-```
-
-**Practical impact:** In Spec Kit, the `spec.md` described all features in one
-document — easier to read end-to-end but harder to update a single capability
-independently. In OpenSpec, adding the standalone package setup was a clean
-separate change (`add-standalone-package`) with its own `specs/package-setup/spec.md`,
-without touching the original feature specs at all.
+|                                                      | Spec Kit                                                                                    | OpenSpec                                                                                                 | Kiro                                                                                                                                                                                        |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Primary artefacts**                                | `spec.md`, `plan.md`, `tasks.md` (+ optionally research, data-model, checklists, contracts) | `proposal.md`, `design.md`, `specs/**/*.md`, `tasks.md` per change                                       | Steering `product.md`, `tech.md`, `structure.md` (expected); per feature `requirements.md`, `design.md`, `tasks.md` (+ `.config.kiro`). In **`kiro/`** there are no markdown specs in-repo. |
+| **Core spec size (estimated)**                       | ~587 (`spec` + `plan` + `tasks`)                                                            | ~363 (`proposal` + `design` + `tasks`, single sum excluding separate delta spec files counted elsewhere) | ~665 lines (prior combined estimate for requirements + design + tasks sessions); **not** re-measured in-repo                                                                                |
+| **`src/` files (`.ts`)**                             | 8 (~981 LOC)                                                                                | 7 (~600 LOC)                                                                                             | 8 (~815 LOC)                                                                                                                                                                                |
+| **Tests**                                            | `node:test` + tsx, **66** tests (successful run)                                            | **51** tests                                                                                             | Jest + **fast-check**, **174** tests                                                                                                                                                        |
+| **Standalone npm package inside methodology folder** | Yes, immediately                                                                            | Needed a **second change** `add-standalone-package` for local `package.json` / build                     | `package.json` + `tsconfig` in output folder; **bin** points to `dist/index.js`                                                                                                             |
 
 ---
 
-## Difference 2: Living Specification vs Static Archive
+## 2. Process philosophy: five axes of variance
 
-**Spec Kit** stores artifacts in `spec/<feature>/` permanently. There is no
-built-in mechanism to merge, update, or retire spec files as the system evolves.
-After a feature is done, the spec folder sits unchanged — it reflects the original
-intent, not the current system state.
+Below is a compressed recap of «Difference 1–5», with practical takeaway.
 
-**OpenSpec** has a two-layer model:
+### 2.1 Artefact granularity and “ownership” of files
 
-1. **Changes** (`openspec/changes/`) — active work in progress
-2. **Living specs** (`openspec/specs/`) — cumulative, merged source of truth
+- **Spec Kit** uses three pillar files per feature in one flat folder: what/why (`spec`), how (`plan`), work checklist (`tasks`). Easy to **read whole-feature**; isolated capability edits are harder.
+- **OpenSpec** separates document roles (proposal / design / tasks) and **splits behavioural requirements per capability** (`cli`, `history`, `standup-report`). Adding a capability without rewriting a monolithic spec is easier (session example: a separate change `add-standalone-package` with `specs/package-setup/spec.md`).
 
-When a change is archived (`openspec archive`), its delta specs are merged into
-`openspec/specs/`. After implementing two changes, the living spec directory
-reflected both:
+**Takeaway:** Spec Kit’s feature boundary is coarser; OpenSpec buys more files but preserves **durably modular contracts**.
 
-```
-openspec/specs/
-├── cli/spec.md          # merged from add-git-standup-generator
-├── history/spec.md      # merged from add-git-standup-generator
-├── standup-report/spec.md
-└── package-setup/spec.md  # added by add-standalone-package
-```
+### 2.2 Living specifications vs static snapshot
 
-**Practical impact:** `openspec/specs/` at any moment describes the current
-system behavior in full — it's a queryable contract, not just a historical
-record. In Spec Kit, checking "what does the current system require?" means
-reading all feature folders, which accumulate without consolidation.
+- **Spec Kit** leaves `spec/<feature>/` **as intent snapshot**, with no built-in merge into a single evolving source of truth.
+- **OpenSpec** keeps **changes** under `openspec/changes/` and, after archiving, aggregates **living** `openspec/specs/` — that tree can serve as **current system contract**, not merely history.
 
----
+**Takeaway:** OpenSpec optimizes for keeping the spec useful as **ongoing interrogation language** over the codebase; Spec Kit optimizes **structuring one large delivery**.
 
-## Difference 3: Phase Gates and Enforcement
+### 2.3 Phase gates and enforcement
 
-**Spec Kit** enforces a strict sequential workflow via CLI commands:
-`/speckit.specify` → `/speckit.plan` → `/speckit.tasks` → `/speckit.implement`.
-Each command validates prerequisites: you cannot run `/speckit.implement` without
-a completed spec, plan, and task list. The gate is a hard block, not a
-suggestion.
+- **Spec Kit:** `/speckit.specify` → plan → tasks → implement with **explicit checks** (including checklists before implement)—you can enforce a firm bar before coding starts.
+- **OpenSpec:** `openspec instructions apply` may report **implementation-ready** as soon as `tasks.md` exists, even while proposal/design “catch up”—flexible iteration, **not** a mechanical stopgap for unfinished design.
+- **Kiro:** product checkpoints, **not** equivalent to Spec Kit’s local CLI gate.
 
-**OpenSpec** has no execution gate. The `openspec instructions apply` command
-returns `state: ready` as soon as `tasks.md` exists — even if `proposal.md` or
-`design.md` are incomplete. The workflow is:
+**Takeaway:** top-down discipline versus **self-discipline** versus **IDE-hosted orchestration**.
 
-```bash
-openspec new change "name"
-# write artifacts in any order
-openspec instructions apply --change "name"   # runs immediately if tasks exist
-```
+### 2.4 Granularity of a “change” / unit of work
 
-**Practical impact:** OpenSpec's flexibility allowed implementing tasks while
-simultaneously refining the design (fluid workflow). But it also meant there was
-no system-enforced checkpoint to catch gaps in specs before coding began — that
-validation was entirely manual. In Spec Kit, the CLI would have prevented
-implementation if any prerequisite artifact was missing or empty.
+- **Spec Kit:** often one feature equals **one** spec bundle (single spec/plan/tasks across modules).
+- **OpenSpec:** **atomic changes**; a small tweak (packaging, etc.) still pulls a **full artefact envelope** — on tiny follow-ups, process overhead can **dominate** the code diff.
+- **Kiro:** no OpenSpec-style `change ID`; a **whole feature bundle** plus steering (as described in session notes for this track).
+
+**Takeaway:** OpenSpec’s shape fits evolving products at the expense of heavyweight small tasks.
+
+### 2.5 Requirement formatting: prose vs scenarios vs EARS
+
+- **Spec Kit:** user stories and acceptance bullets in **free prose**—readable; “pass/fail” can drift between readers.
+- **OpenSpec:** **SHALL** and **GIVEN/WHEN/THEN** per scenario—**more verbose**, but roughly one scenario ≈ one crisp test (the `filterCommits` unit tests for this track aligned closely with spec scenarios).
+- **Kiro:** an **EARS-style** vein (`WHEN` / `THE … SHALL`) between those poles—more structure than prose, without mandated `#### Scenario` on every slice.
+
+Concrete style snippets were quoted in earlier session notes; structurally the comparison is covered in §2.5 above.
 
 ---
 
-## Difference 4: Scope of a Single Change
+## 3. Subjective driving experience and where process fails
 
-**Spec Kit** treats an entire feature as one unit. The `001-git-standup-cli`
-spec covered all modules (git-reader, filter, grouper, formatter, history, CLI)
-in a single spec + plan + tasks. The feature boundary is coarse-grained.
+Below is **not measurement** — a tightened narrative from session experience, updated with repo file checks.
 
-**OpenSpec** treats each change as atomic and additive. The core feature
-(`add-git-standup-generator`) and the packaging improvement
-(`add-standalone-package`) were separate changes with separate proposals, specs,
-and task lists — even though from a code perspective they touched some of the
-same files. This required creating a second full set of artifacts (proposal →
-design → spec → tasks) for what was effectively a 4-file addition.
+### 3.1 Spec Kit — CLI-centric SDD
 
-**Practical impact:** For small follow-up changes, OpenSpec's overhead
-(4 artifacts per change) felt disproportionate — writing a proposal and design
-doc for adding a `package.json` was more process than the change warranted. Spec
-Kit would have just added tasks to the existing feature. OpenSpec's model makes
-more sense when changes truly modify distinct capabilities of an already-shipped
-system.
+**Behaviour.** Slash commands with **hard prerequisites** set a slower, steadier tempo: less “ship code now, tighten spec later”. In this project’s sessions, Spec Kit showed **strong discipline among file-based workflows**; wall-clock was **faster than Kiro**; versus OpenSpec the main contrast is **phase enforcement**, not typing speed.
 
----
+**Where process falters.** Gates focus on **launch** of implementation—**slow drift** where code evolves but `spec.md` stalls is not mechanically detected; still ethics of teams and reviews.
 
-## Difference 5: Spec Format — Scenarios vs Prose
+**What the repo corroborates.** `.cursor/commands/`, constitution, optionally rich artefacts (research, `contracts/cli.md`). Details in §4.
 
-**Spec Kit** writes requirements as user stories with acceptance criteria in
-free-form prose or bullet lists. There is no enforced scenario syntax:
+### 3.2 OpenSpec — change at the centre, living specs for the long haul
 
-```markdown
-## User Story 3: Filter commits by author
-As a developer, I want to filter commits by my email address
-so that the report only shows my work.
+**Behaviour.** Work centres on **`openspec/changes/…`**, then post-archive on **`openspec/specs/`**; `apply` may **allow** implementation once tasks exist—handy to **code while clarifying design**, but no hard lock on proposal/design completeness.
 
-**Acceptance Criteria:**
-- Default: uses git config user.email
-- When --author is provided: uses that value
-```
+**Where process falters.** Even a small code fix can require a **full change packet**; gaps in proposal/design are **not caught** the way Spec Kit’s implement gate catches missing plan/tasks.
 
-**OpenSpec** enforces a SHALL/MUST + GIVEN/WHEN/THEN scenario format for every
-requirement, with `####` headings required for each scenario:
+**Repository.** Skills (`openspec-propose`, `openspec-apply-change`, `openspec-archive-change`, `openspec-explore`); **Purpose** in living `cli/spec.md` can remain **TBD** post-archive—documentation debt (§6.2).
 
-```markdown
-### Requirement: Author Filter
-The system SHALL filter commits by the caller-specified author email.
+### 3.3 Kiro — SDD inside the product (IDE)
 
-#### Scenario: Author filter
-- GIVEN a repository with commits from multiple authors
-- WHEN the caller specifies an author
-- THEN only commits whose author email matches that value are considered
-```
+**Behaviour.** Closer to **everyday spec-driven** flow: spec steps, implementation runs, checkpoints **live in the product**, not only files + CLI. Expected cost—**higher wall-clock** for the same scope versus file-only tracks (rate limits / queueing on the product side were **not verified** here).
 
-**Practical impact:** OpenSpec's format is more verbose but directly testable —
-each scenario maps to a concrete test case. During implementation, the
-`filterCommits` unit tests were written almost verbatim from the spec scenarios.
-Spec Kit's acceptance criteria are easier to read but leave more interpretation
-to the implementer about what exactly constitutes "passing."
+**Where process falters.** Substantive requirement edits still mean **editing markdown** (repo or UI)—IDE magic stops there.
+
+**Repository.** Under `methodologies/kiro`, judgement rests on **code and tests** (Jest, PBT, long integration); markdown artefacts are absent.
 
 ---
 
-## Spec Kit: CLI-gated SDD, artifacts, and outcome
+## 4. Repository inventory: commands, skills, artefacts
 
-**How it felt to drive.** Spec Kit is **CLI-first**: the workflow is a chain of
-slash-commands (`/speckit.specify` → `plan` → `tasks` → `implement`) with **hard
-prerequisites** — a deliberate pace, with less room to “start coding and fix the
-spec later.” In sessions for this project that felt like the **highest
-discipline and predictability** among the file-based tools: you pay friction up
-front for fewer surprise gaps. Wall-clock was **faster than Kiro** here; relative
-to OpenSpec, the main difference is **enforcement**, not raw typing speed.
+### 4.1 Spec Kit
 
-**Artifacts (`methodologies/spec-kit/spec/001-git-standup-cli/` and templates).**
-Besides `spec.md`, `plan.md`, and `tasks.md`, the tree can grow **optionally rich**:
-`research.md`, `data-model.md`, `checklists/`, and `contracts/` (e.g. CLI contract
-notes). The **constitution** lives under `.specify/memory/constitution.md` and
-reinforces repo-wide rules — more scaffolding than a minimal three-file spec,
-closer to “full SDD pack” in one feature folder.
+**Tooling**
 
-**Where the process does not help.** The guardrails are only as good as the last
-edits to the markdown: **large spec edits** are still hand-authored files. The
-CLI blocks *start* of implementation, not *ongoing* drift between code and an
-unmaintained `spec.md`.
+- Commands under `.cursor/commands/`: `speckit.specify`, `speckit.plan`, `speckit.tasks`, `speckit.implement`, `speckit.checklist`, `speckit.clarify`, `speckit.constitution`, `speckit.analyze`, `speckit.taskstoissues`.
+- Templates under `.specify/templates/` (spec, plan, tasks, checklist, constitution, agent).
+- Rule `.cursor/rules/specify-rules.mdc` (always-on synthesis of latest plans).
 
-**Implementation review (`methodologies/spec-kit/`).** A coherent **read →
-parse → filter → group → format → write** pipeline: a dedicated
-`commit-parser.ts` on top of `git-reader.ts` (stream-oriented log format with
-`COMMIT` sentinels), `commit-filter`, `commit-grouper`, `report-formatter`,
-`history-store`, and `cli.ts`. **ESM** (`"type": "module"`), **zero production
-dependencies**, **Node’s built-in test runner** with `tsx` for TypeScript, plus
-`eslint` in dev. Tests span **unit and integration** (`tests/unit/`,
-`tests/integration/`). Entry is `dist/cli.js` from `tsc` — the same “lean CLI
-package” idea as the other tracks, with a slightly **larger** module count (8
-`src` files including the parser).
+**Artefacts `spec/001-git-standup-cli/`**
 
-**Summary vs the other two:** Spec Kit optimizes for **enforced order and
-local CLI gating**; the repo reflects that in **more auxiliary spec files** and a
-**parser** split. OpenSpec below trades gates for **living specs**; Kiro (later)
-trades file-only workflows for **IDE-orchestrated** SDD.
+| File                              | Lines (~) | Role                                          |
+| --------------------------------- | --------- | --------------------------------------------- |
+| `spec.md`                         | 206       | User stories, FRs, scope                      |
+| `plan.md`                         | 77        | Tech context, constitution check, module tree |
+| `tasks.md`                        | 304       | Phases, tasks, US alignment                   |
+| `research.md`                     | 220       | Phase 0                                       |
+| `data-model.md`                   | 286       | Data models                                   |
+| `contracts/cli.md`                | 217       | CLI contract                                  |
+| `checklists/requirements.md`      | —         | Spec quality checklist                        |
+| `.specify/memory/constitution.md` | 154       | Repository constitution                       |
 
----
+### 4.2 OpenSpec
 
-## OpenSpec: change proposals, living specs, and outcome
+**Skills**
 
-**How it felt to drive.** OpenSpec is **change-centric**: you work inside
-`openspec/changes/…` and (after archive) the cumulative **`openspec/specs/`** tree.
-`openspec instructions apply` is **permissive** — `state: ready` as soon as
-`tasks.md` exists — so the session is **flexible and fast to start implementing**,
-at the cost of **no mechanical lock** that proposal/design are complete. For
-this feature, that matched **iterating on tests and code while the spec
-settled**; compared to Spec Kit, **self-discipline** replaced CLI blocking.
-Wall-clock was **faster than Kiro**; vs Spec Kit, the main contrast is
-**opt-in rigor** instead of **mandatory phases**.
+| Skill                     | Purpose                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| `openspec-propose`        | Change creation: proposal, design, tasks via `openspec instructions` |
+| `openspec-apply-change`   | Implementation; `blocked` / `all_done`; `contextFiles`               |
+| `openspec-archive-change` | Archive + optional sync of delta → main specs                        |
+| `openspec-explore`        | Explore **without** building product code; markdown thinking allowed |
 
-**Artifacts.** Per change: `proposal.md`, `design.md`, per-capability
-`specs/**/spec.md`, `tasks.md`. After `openspec archive`, **living specs** hold the
-**current** behavior (`openspec/specs/cli`, `history`, `standup-report`,
-`package-setup`, …) — the methodology’s main long-term payoff is **a queryable
-system contract**, not a single static folder.
+Commands: `opsx-propose`, `opsx-apply`, `opsx-archive`, `opsx-explore`.
 
-**Where the process does not help.** **Small follow-up work** (e.g. adding
-`package.json` as a second change) still incurs a **full second blob** of
-proposal/design/spec/tasks — process weight can exceed code weight. Gaps in
-`proposal.md` or `design.md` are **not** caught by `apply` the way Spec Kit’s
-implement gate catches missing `plan`/`tasks`.
+**Sizes (measured):** proposal + design + tasks for core archived change ≈ **363** lines; all delta specs in that archive ≈ **646**; living `openspec/specs/**/*.md` ≈ **343** lines across four capabilities.
 
-**Implementation review (`methodologies/openspec/`).** Same overall pipeline as
-the feature needs (git read, filter, group, report, history, CLI) with **7 `src/`
-files** — no separate parser module; **typed errors** (e.g. `GitReaderError` in
-`types.ts`) and a compact `readCommits` path. **ESM**, **no runtime
-dependencies**, **Node test runner** + `tsx`. A **`bin/git-standup` wrapper** next
-to `dist/`. The **`*-openspec*`** package in this folder was the **add-on change**
-for standalone packaging, mirroring the second OpenSpec change in the main repo’s
-story. **No property-based tests** in this track (unlike Kiro’s `fast-check`);
-coverage is **example- and integration-driven**.
+### 4.3 Kiro
 
-**Summary vs the other two:** OpenSpec optimizes for **proposals, per-surface
-specs, and a merged living spec** after archive. The **Spec Kit** section above
-is stricter **locally**; **Kiro** below is **strongest on in-IDE process**, not on
-this archive model.
+Only **source and tests** live in the folder; steering and requirements/design are not present as markdown here—only **inferred** from code and from how other tracks described the feature.
 
 ---
 
-## Kiro: product-native SDD, artifacts, and outcome
+## 5. `src/` implementation: architecture, similarity, size
 
-Kiro (Cursor) is a **separate product workflow** from file-based CLIs. Among the
-three, it is **the most convenient for SDD-shaped work in daily use**: the IDE is
-**built around** spec-driven steps (start spec, implementation runs, checkpoints)
-rather than ad hoc prompt chains, so the **mental model and the UI line up** more
-tightly than with file-and-CLI–only flows. The tradeoff is **throughput**:
-end-to-end runs for this same feature felt **markedly slower** than Spec Kit and
-OpenSpec, even on comparable models. **Whether that is tied to a free plan,
-rate limits, or product-side scheduling was not verified here** — it is still the
-practical experience to plan for in time-boxed sessions.
+Common pipeline: read git → filter → group → format → history / CLI.
 
-**Artifacts.** Besides a per-feature set (`specs/<feature>/requirements.md`,
-`design.md`, `tasks.md`, and `.config.kiro`), Kiro adds **steering** files at the
-repo level (`steering/product.md`, `tech.md`, `structure.md`) so product context,
-stack, and layout travel with the work — closer to a lightweight “constitution”
-plus feature bundle than to OpenSpec’s per-change + archive split.
+| Aspect          | Spec Kit                     | OpenSpec                       | Kiro                                      |
+| --------------- | ---------------------------- | ------------------------------ | ----------------------------------------- |
+| Files in `src/` | 8 (~981 TS LOC)              | 7 (~600 LOC)                   | 8 (~815 LOC), camelCase                   |
+| Parser          | Dedicated `commit-parser.ts` | Inside `git-reader` stream     | Inside `gitReader.ts` + exports for tests |
+| Git errors      | String `Error`               | `GitReaderError` in `types.ts` | Per codebase conventions                  |
+| Entry           | `cli.ts`                     | `cli.ts`                       | `index.ts` + `outputWriter.ts`            |
+| Linter          | ESLint (dev)                 | Not in `package.json`          | Not in `package.json`                     |
 
-**Requirement style** sits between Spec Kit and OpenSpec: numbered requirements
-with user stories, then **EARS-style** acceptance lines (`WHEN` / `THE … SHALL`)
-— strict enough to map to tests without OpenSpec’s `#### Scenario` boilerplate
-everywhere.
-
-**Where the UI does not help.** Once requirements or design need substantive
-edits, the experience converges on **editing markdown in the repo or in the
-hosting UI** — the same “open the file and fix it” step as in Spec Kit and
-OpenSpec, without a first-class advantage for that particular edit pass.
-
-**Latency (unchanged from above).** Treat wall-clock time as a first-class
-constraint when choosing Kiro vs the others, unless the SDD-in-the-IDE gains are
-worth the wait.
-
-**Implementation review (`methodologies/kiro/`).** The delivered tree is coherent:
-a **read → filter → group → format → write** pipeline in **TypeScript** on Node,
-**zero runtime dependencies** (only `devDependencies` for build and test), **Jest**
-with `ts-jest` plus **fast-check** property tests on the pure modules, and a
-**long integration suite** against real temp git repos. Where a `design.md` exists
-in the Kiro spec folder, it tends to be unusually complete (data shapes, error
-table, PBT “correctness properties,” CI expectations). A few **spec ↔ code** nits
-are worth tracking if the requirement docs are still the original prose: e.g. if
-`requirements.md` describes the default author filter in terms of **email** while
-`gitReader.ts` resolves `git config user.name` when `--author` is omitted; and if
-the **path** grouping strategy still runs `git diff-tree` with `process.cwd()`
-rather than the selected `--repo`, non-cwd repositories can misbehave for that
-mode. In a normal environment, `npm test` passes (Jest compiles from `src/` via
-`ts-jest`; `npm run build` is for the shippable CLI in `dist/`). Integration tests
-that run `git init` may fail in restricted sandboxes that block hook installation.
-
-**Summary vs the other two:** Kiro is the **in-product, orchestration-first** path
-(steering + feature bundle + guided steps), as opposed to **Spec Kit’s** CLI
-gates and **OpenSpec’s** change + living-spec lifecycle — see the **Spec Kit** and
-**OpenSpec** subsections above. The differentiator is **where you work** and
-**session duration**: **process UX vs wall-clock time**, and whether **IDE-native**
-flow matters more than **local CLI** or **archiveable specs**.
+**Similarity:** high at domain logic (conventional types, exclude patterns, three grouping modes). Differs in `git log` format, branch strategy, path-grouping details.
 
 ---
 
-## Summary Table
+## 6. Specification ↔ code and completeness
 
-| Difference | Spec Kit | OpenSpec | Kiro |
-|---|---|---|---|
-| **Artifact structure** | Flat: spec + plan + tasks per feature | Layered: proposal + design + per-capability specs + tasks per change | Steering + per-feature `requirements` / `design` / `tasks` (+ config) |
-| **Living documentation** | Static — specs accumulate, nothing merges | Active — delta specs merge into `openspec/specs/` on archive | Static feature folder; no in-repo merge/archive workflow like OpenSpec |
-| **Phase gates** | Hard: CLI blocks implementation without prerequisites | None: `apply` runs whenever `tasks.md` exists | Product workflows / checkpoints; not the same as Spec Kit’s local CLI block |
-| **Change granularity** | One change = entire feature | One change = one capability delta; small changes still require full artifact set | One feature = full artifact + steering context; no separate “change ID” layer |
-| **Requirement format** | Free-form prose / acceptance criteria | SHALL + GIVEN/WHEN/THEN scenarios (enforced structure) | EARS-style (WHEN / THE … SHALL) + user stories; strict but less uniform than OpenSpec |
-| **Standalone setup** | Included by default | Required explicit second change | Included in the Kiro output folder (`package.json`, `tsconfig`, `bin` → `dist/`) |
-| **Stack in this project** | TypeScript | TypeScript | TypeScript (Node, `tsc` → `dist/`), same logical feature set |
+### 6.1 Spec Kit
+
+Default **author** (`git config user.email`) matches between `contracts/cli.md` and `cli.ts`. Tasks bind to user stories. Integration tests (environment without blocked `git init` hooks) exercise `--repo` and the pipeline.
+
+### 6.2 OpenSpec
+
+Formal scenarios map cleanly to tests; living `openspec/specs/cli/spec.md` may still show **Purpose = TBD**—a living-spec “shop window” debt. “No `user.email`” scenarios should be checked against real `cli.ts`.
+
+### 6.3 Kiro
+
+| Topic           | Observation                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Default author  | Code resolves `git config user.name`; other tracks and domain copy often assume **email**—sync risk.                                  |
+| Path + `--repo` | `groupCommits` defaulting `repoPath = process.cwd()` alongside `git diff-tree` logic—edge case when repo ≠ cwd (noted in this audit). |
+| Evidence        | Heavy emphasis on **tests** (incl. PBT), not adjacent markdown.                                                                       |
+
+---
+
+## 7. Tests and execution environment
+
+| Path                     | Result (full environment, not sandboxed) |
+| ------------------------ | ---------------------------------------- |
+| `methodologies/spec-kit` | 66 tests, green                          |
+| `methodologies/openspec` | 51 tests, green                          |
+| `methodologies/kiro`     | 174 tests (Jest), green                  |
+
+In a **sandbox** that blocks hook installation for `git init`, integration tests fail—a known environment constraint for these suites.
+
+**Strategies:** Spec Kit and OpenSpec use `node:test` + tsx; Kiro uses Jest + **fast-check** on several modules.
+
+---
+
+## 8. Summary table
+
+| Dimension                | Spec Kit                                      | OpenSpec                                                             | Kiro                                                                                    |
+| ------------------------ | --------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Artefact layout**      | Flat: spec + plan + tasks per feature         | Layered: proposal + design + per-capability specs + tasks per change | Steering + requirements / design / tasks per feature (+ config), when those files exist |
+| **Living documentation** | Static feature folder                         | Active: merge into `openspec/specs/` on archive                      | Static feature folder / outside repo; no OpenSpec-style merge                           |
+| **Gates before code**    | Hard (scripts, checklists in implement)       | Softer: `apply` readiness when tasks exist                           | Product checkpoints; not Spec Kit CLI gate                                              |
+| **Change granularity**   | One feature—a large chunk                     | One change—a delta perimeter; tiny edits drag full artefact bundle   | Whole feature bundle without OpenSpec-style change ID                                   |
+| **Requirement shape**    | Prose, user stories, acceptance bullets       | SHALL + GIVEN/WHEN/THEN scenarios                                    | EARS + stories (expected for this track)                                                |
+| **Standalone package**   | Included in methodology folder out of the box | Second packaging change in project history                           | Package in Kiro output folder                                                           |
 
 ---
 
 ## Overall Assessment
 
-All three approaches produced a **complete, test-backed** implementation of the
-same feature. The main tradeoffs are **where** the methodology invests effort:
-local CLI enforcement, living spec evolution, or product-guided SDD flows.
+All three approaches produced a **complete, test-backed** implementation of the same feature. The main tradeoffs are **where** the methodology invests effort: local CLI enforcement, living spec evolution, or product-guided SDD flows.
 
-- **Spec Kit** is better suited to greenfield features where the entire scope is
-  known upfront and you want the AI blocked from guessing. The enforcement model
-  reduces the chance of premature implementation but slows iteration.
+- **Spec Kit** suits **greenfield** work where the scope is mostly known up front and you want implementation **blocked** until `spec` / `plan` / `tasks` (and checklists, when used) are in place—it reduces premature coding at the price of slower iteration and less parallel tinkering between spec and code. The audit bears this out: slash-command workflow plus `contracts/cli.md` tightly aligned with `cli.ts`.
 
-- **OpenSpec** is better suited to an evolving system where requirements emerge
-  incrementally. Its archive + living spec model keeps the current system state
-  queryable without requiring all scope to be finalized upfront. The overhead per
-  change is higher, but the long-term spec hygiene is stronger.
+- **OpenSpec** suits an **evolving** system where requirements arrive incrementally. The archive + **`openspec/specs/`** model keeps today’s behaviour **Queryable** without freezing the whole scope before coding; per-change artefacts add overhead on **small follow-ups**, but long-term contract hygiene can win for multi-capability maintenance. Repo checks show formal GWT scenarios mapping well to tests, with occasional editorial debt (for example **Purpose** still **TBD** in a merged living `cli/spec.md`).
 
-- **Kiro** is the strongest on **“SDD in the IDE”**: the product is **most aligned
-  with** spec-driven work among the three, and day-to-day driving is the **least
-  awkward** for that style — at the cost of the **longest** wall-clock runs here,
-  **possibly** amplified on a free or limited plan (not proven). Hand-editing
-  requirement or design markdown for non-trivial changes is still the same
-  file-based step as in the other two. Choose Kiro when **tightest fit between
-  workflow and UI** and **steering-style repo context** outweigh raw speed and the
-  OpenSpec-style living spec database.
+- **Kiro** is strongest on **“SDD in the IDE”** among the three: the product aligns with guided spec steps rather than prompt-only flows, but this project observed the **longest wall-clock** end-to-end (whether due to quotas or scheduling was **not** validated). Everyday driving can feel least awkward for that style **if** latency is acceptable; substantive edits to requirements/design are still ordinary markdown edits. Steering-style context belongs with the methodology when those files exist—for **`methodologies/kiro`** in this repo they do **not**, so judgement here rests on **code + tests** (including PBT) and parity checks against gaps such as **`user.name` vs email** defaults and **`--repo`** with path grouping.
+
+In short: choose **Spec Kit** when you want **predictable phased enforcement** locally; choose **OpenSpec** when **living, capability-sliced specs** matter more than minimal process on tiny changes; choose **Kiro** when **tight UX fit for spec-led work inside the IDE** outweighs throughput and you accept file-based artefacts for substantive edits—the same coarse rule as above, enriched with this repository’s audited facts.
+
+---
+
+## 9. What repository audit adds on top of narrative-only comparison
+
+- Explicit catalogue of Spec Kit **slash commands** and OpenSpec **skills**.
+- **Numbers:** artefact and `src/` line impressions, test counts, successful run facts.
+- **Concrete findings:** Purpose TBD in living `cli/spec.md`; absent markdown under Kiro; **email vs `user.name`** divergence confirmed from code review.
+- Tight coupling of **Difference 1–5** themes above with **measurable** observations.
